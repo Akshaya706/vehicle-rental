@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vehicle Rental Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header>
+    <div class="header-container">
+      <div class="logo-group">
+        <div class="logo-icon"><i class="fa-solid fa-car-side"></i></div>
+        <div>
+          <span class="brand-name">DriveEase</span>
+          <span class="brand-badge">v1.0 SRS</span>
+        </div>
+      </div>
+      
+      <!-- Logged In User Info -->
+      <div class="user-nav" id="userHeaderNav" style="display: none;">
+        <div class="user-profile-badge">
+          <i class="fa-solid fa-user-circle" style="color: var(--primary);"></i>
+          <span id="navUserName">User</span>
+          <span class="role-pill" id="navUserRole">ROLE</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="logoutUser()"><i class="fa-solid fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ================= 1. DEDICATED LOGIN & REGISTER PORTAL ================= -->
+    <div id="loginPortalView" class="glass-panel" style="max-width: 520px; margin: 3rem auto; padding: 2.5rem; text-align: center;">
+      <div style="margin-bottom: 1.5rem;">
+        <div class="logo-icon" style="width: 60px; height: 60px; margin: 0 auto 1rem auto; font-size: 2rem;">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <h2 style="font-weight: 800; font-size: 1.6rem; margin-bottom: 0.25rem;">System Authentication</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Sign in with your role credentials to access your dashboard</p>
+      </div>
+
+      <!-- Role Selector Tabs -->
+      <div class="auth-role-selector">
+        <button class="auth-role-btn active" id="roleBtnCustomer" onclick="selectLoginRole('CUSTOMER')">
+          <i class="fa-solid fa-user"></i> Customer
+        </button>
+        <button class="auth-role-btn" id="roleBtnManager" onclick="selectLoginRole('RENTAL_MANAGER')">
+          <i class="fa-solid fa-clipboard-check"></i> Manager
+        </button>
+        <button class="auth-role-btn" id="roleBtnAdmin" onclick="selectLoginRole('ADMIN')">
+          <i class="fa-solid fa-user-gear"></i> Admin
+        </button>
+      </div>
+
+      <!-- Demo Credentials Helper Box -->
+      <div class="alert-banner alert-warning" id="demoCredsBox" style="font-size: 0.82rem; margin-bottom: 1.25rem; text-align: left;">
+        <i class="fa-solid fa-key" style="font-size: 1rem;"></i>
+        <div>
+          <strong>Demo Password Credentials:</strong><br>
+          <span id="demoCredsText">Customer: <code>john_doe</code> / <code>user123</code></span>
+        </div>
+      </div>
+
+      <!-- Login Form -->
+      <form id="authLoginForm" onsubmit="event.preventDefault(); submitRoleLogin();">
+        <input type="hidden" id="selectedRoleInput" value="CUSTOMER">
+        
+        <div class="form-group" style="margin-bottom: 1rem; text-align: left;">
+          <label>Username</label>
+          <input type="text" class="form-control" id="loginUsername" required placeholder="Enter username">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.5rem; text-align: left;">
+          <label>Password</label>
+          <input type="password" class="form-control" id="loginPassword" required placeholder="Enter password">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem;" id="loginSubmitBtn">
+          <i class="fa-solid fa-right-to-bracket"></i> Sign In to Customer Dashboard
+        </button>
+      </form>
+
+      <!-- Customer Registration Toggle link -->
+      <div id="regToggleBox" style="margin-top: 1.25rem; font-size: 0.88rem; color: var(--text-muted);">
+        Don't have a customer account? <a href="#" onclick="toggleRegisterMode(true)" style="color: var(--accent-cyan); font-weight: 600; text-decoration: none;">Register New Customer</a>
+      </div>
+
+      <!-- Registration Form (Hidden by default) -->
+      <form id="authRegisterForm" style="display: none; text-align: left; margin-top: 1rem;" onsubmit="event.preventDefault(); submitCustomerRegistration();">
+        <hr style="border-color: var(--border-glass); margin-bottom: 1rem;">
+        <h4 style="margin-bottom: 1rem; text-align: center; color: var(--accent-cyan);"><i class="fa-solid fa-user-plus"></i> Customer Registration</h4>
+        
+        <div class="form-group" style="margin-bottom: 0.75rem;">
+          <label>Full Name</label>
+          <input type="text" class="form-control" id="regName" required placeholder="e.g. Alice Smith">
+        </div>
+        <div class="form-group" style="margin-bottom: 0.75rem;">
+          <label>Username</label>
+          <input type="text" class="form-control" id="regUsername" required placeholder="e.g. alice_s">
+        </div>
+        <div class="form-group" style="margin-bottom: 0.75rem;">
+          <label>Password</label>
+          <input type="password" class="form-control" id="regPassword" required placeholder="••••••••">
+        </div>
+        <div class="form-group" style="margin-bottom: 0.75rem;">
+          <label>Phone Number</label>
+          <input type="text" class="form-control" id="regPhone" required placeholder="+1 555-0199">
+        </div>
+        <div class="form-group" style="margin-bottom: 0.75rem;">
+          <label>Address</label>
+          <input type="text" class="form-control" id="regAddress" required placeholder="123 Main St, City">
+        </div>
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label>Driving Licence Number</label>
+          <input type="text" class="form-control" id="regLicence" required placeholder="DL-99887766">
+        </div>
+
+        <button type="submit" class="btn btn-success" style="width: 100%; padding: 0.75rem;"><i class="fa-solid fa-user-check"></i> Register & Login</button>
+        <button type="button" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;" onclick="toggleRegisterMode(false)">Back to Login</button>
+      </form>
+    </div>
+
+
+    <!-- ================= 2. CUSTOMER DASHBOARD (ISOLATED) ================= -->
+    <div id="customerDashboardView" class="dashboard-view" style="display: none;">
+      <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h2 style="font-weight: 800;"><i class="fa-solid fa-car" style="color: var(--accent-cyan);"></i> Customer Portal</h2>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">Browse available vehicles, reserve, view booking status, and make payments</p>
+        </div>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="glass-panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fa-solid fa-magnifying-glass" style="color: var(--accent-cyan);"></i> Search Vehicles Catalog</div>
+          <button class="btn btn-secondary btn-sm" onclick="resetVehicleSearch()"><i class="fa-solid fa-rotate-left"></i> Reset Filter</button>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Vehicle Type</label>
+            <select class="form-control" id="searchType" onchange="filterVehicles()">
+              <option value="">All Types (Cars, Bikes, SUVs)</option>
+              <option value="Car">Cars</option>
+              <option value="Bike">Bikes</option>
+              <option value="SUV">SUVs</option>
+              <option value="Luxury">Luxury</option>
+              <option value="Electric">Electric</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Brand / Model</label>
+            <input type="text" class="form-control" id="searchKeyword" placeholder="e.g. Toyota, BMW, Civic" oninput="filterVehicles()">
+          </div>
+          <div class="form-group">
+            <label>Max Daily Rate ($)</label>
+            <input type="number" class="form-control" id="searchMaxRate" placeholder="e.g. 100" oninput="filterVehicles()">
+          </div>
+          <div class="form-group">
+            <label>Availability</label>
+            <select class="form-control" id="searchAvailability" onchange="filterVehicles()">
+              <option value="">All Statuses</option>
+              <option value="AVAILABLE" selected>Available Only</option>
+              <option value="BOOKED">Booked</option>
+              <option value="RENTED">Rented</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vehicle Catalog Grid -->
+      <h3 style="margin-bottom: 1rem; font-weight: 700;"><i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Vehicles Catalog</h3>
+      <div class="vehicles-grid" id="vehiclesGridContainer">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Customer Bookings Section -->
+      <div class="glass-panel" style="margin-top: 2.5rem;">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fa-solid fa-clock-rotate-left" style="color: var(--accent-emerald);"></i> My Booking History & Payments</div>
+          <button class="btn btn-secondary btn-sm" onclick="loadCustomerBookings()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </div>
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Booking ID</th>
+                <th>Vehicle</th>
+                <th>Rental Period</th>
+                <th>Days</th>
+                <th>Total Charge</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="customerBookingsTable">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ================= 3. RENTAL MANAGER DASHBOARD (ISOLATED) ================= -->
+    <div id="managerDashboardView" class="dashboard-view" style="display: none;">
+      <div style="margin-bottom: 1.5rem;">
+        <h2 style="font-weight: 800;"><i class="fa-solid fa-clipboard-check" style="color: var(--accent-amber);"></i> Rental Manager Portal</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Approve bookings, process vehicle returns & damage reports, and schedule maintenance</p>
+      </div>
+
+      <!-- Expiry Alert Banner -->
+      <div id="expiryAlertContainer"></div>
+
+      <!-- Manager Stats Header -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-amber);"><i class="fa-solid fa-hourglass-half"></i></div>
+          <div>
+            <div class="stat-val" id="mgrPendingCount">0</div>
+            <div class="stat-lbl">Pending Approvals</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(99, 102, 241, 0.2); color: var(--primary);"><i class="fa-solid fa-key"></i></div>
+          <div>
+            <div class="stat-val" id="mgrActiveRentalsCount">0</div>
+            <div class="stat-lbl">Active Rentals</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(244, 63, 94, 0.2); color: var(--accent-rose);"><i class="fa-solid fa-wrench"></i></div>
+          <div>
+            <div class="stat-val" id="mgrMaintCount">0</div>
+            <div class="stat-lbl">Vehicles under Maintenance</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pending Reservations Approval Queue (FR4) -->
+      <div class="glass-panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fa-solid fa-clipboard-question" style="color: var(--accent-amber);"></i> Pending Reservations Approval Queue</div>
+        </div>
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Vehicle</th>
+                <th>Rental Dates</th>
+                <th>Rate & Total</th>
+                <th>Status</th>
+                <th>Manager Action</th>
+              </tr>
+            </thead>
+            <tbody id="managerPendingTable">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Active Rentals & Vehicle Return Processing (FR8 & FR9) -->
+      <div class="glass-panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fa-solid fa-arrow-left-right-to-line" style="color: var(--accent-cyan);"></i> Active Rentals & Vehicle Return Inspection</div>
+        </div>
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Booking ID</th>
+                <th>Customer</th>
+                <th>Vehicle & Reg No</th>
+                <th>Rental Dates</th>
+                <th>Status</th>
+                <th>Return Processing</th>
+              </tr>
+            </thead>
+            <tbody id="managerActiveTable">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Maintenance Scheduling & Tracking (FR10) -->
+      <div class="glass-panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fa-solid fa-screwdriver-wrench" style="color: var(--accent-rose);"></i> Maintenance & Service Schedule</div>
+          <button class="btn btn-warning btn-sm" onclick="openMaintenanceModal()"><i class="fa-solid fa-plus"></i> Schedule Maintenance</button>
+        </div>
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Maint ID</th>
+                <th>Vehicle</th>
+                <th>Last Service</th>
+                <th>Next Service</th>
+                <th>Status</th>
+                <th>Notes</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="managerMaintenanceTable">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ================= 4. ADMIN DASHBOARD (ISOLATED) ================= -->
+    <div id="adminDashboardView" class="dashboard-view" style="display: none;">
+      <div style="margin-bottom: 1.5rem;">
+        <h2 style="font-weight: 800;"><i class="fa-solid fa-user-gear" style="color: var(--accent-rose);"></i> Administrator Dashboard</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Fleet CRUD management, Customer Registry & Business Analytics</p>
+      </div>
+
+      <!-- Analytics Summary Banner (FR13 & Feature 5) -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald);"><i class="fa-solid fa-dollar-sign"></i></div>
+          <div>
+            <div class="stat-val" id="adminTotalRev">$0</div>
+            <div class="stat-lbl">Total Revenue Collected</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan);"><i class="fa-solid fa-car"></i></div>
+          <div>
+            <div class="stat-val" id="adminTotalVehicles">0</div>
+            <div class="stat-lbl">Fleet Vehicles</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(99, 102, 241, 0.2); color: var(--primary);"><i class="fa-solid fa-chart-pie"></i></div>
+          <div>
+            <div class="stat-val" id="adminUtilRate">0%</div>
+            <div class="stat-lbl">Fleet Utilization Rate</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-amber);"><i class="fa-solid fa-users"></i></div>
+          <div>
+            <div class="stat-val" id="adminCustomerCount">0</div>
+            <div class="stat-lbl">Registered Customers</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analytics Charts Row -->
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+        <div class="glass-panel" style="margin: 0;">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fa-solid fa-chart-line" style="color: var(--accent-cyan);"></i> Monthly Revenue Trend</div>
+          </div>
+          <div style="height: 240px; position: relative;">
+            <canvas id="revenueChart"></canvas>
+          </div>
+        </div>
+        <div class="glass-panel" style="margin: 0;">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fa-solid fa-trophy" style="color: var(--accent-amber);"></i> Most Rented Vehicles</div>
+          </div>
+          <div id="topVehiclesList">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Vehicle Management Section (FR2) -->
+      <div class="glass-panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fa-solid fa-sliders" style="color: var(--primary);"></i> Fleet Management (Add / Update / Delete Vehicles)</div>
+          <button class="btn btn-primary btn-sm" onclick="openAddVehicleModal()"><i class="fa-solid fa-circle-plus"></i> Add New Vehicle</button>
+        </div>
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Brand & Model</th>
+                <th>Registration No</th>
+                <th>Daily Rate</th>
+                <th>Availability</th>
+                <th>Expiry Dates</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminVehiclesTable">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Customer Registry (FR3) -->
+      <div class="glass-panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fa-solid fa-id-card" style="color: var(--accent-emerald);"></i> Customer Registry & Licence Verification</div>
+        </div>
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Customer ID</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Address</th>
+                <th>Driving Licence</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminCustomersTable">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- Booking & Dynamic Price Modal (FR4 & FR6) -->
+  <div class="modal-overlay" id="bookingModal">
+    <div class="modal-container">
+      <button class="modal-close" onclick="closeModal('bookingModal')">&times;</button>
+      <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-calendar-check" style="color: var(--accent-cyan);"></i> Reserve Vehicle & Price Estimate</h3>
+      
+      <div id="bookingVehicleSummary" style="background: rgba(15, 23, 42, 0.5); padding: 0.85rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid var(--border-glass);">
+        <!-- Summary loaded dynamically -->
+      </div>
+
+      <input type="hidden" id="bookingVehicleId">
+      <div class="form-grid" style="margin-bottom: 1rem;">
+        <div class="form-group">
+          <label>Rental Start Date</label>
+          <input type="date" class="form-control" id="bookingStartDate" onchange="calculateDynamicPrice()">
+        </div>
+        <div class="form-group">
+          <label>Rental End Date</label>
+          <input type="date" class="form-control" id="bookingEndDate" onchange="calculateDynamicPrice()">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; text-transform: none;">
+          <input type="checkbox" id="bookingWeekendFlag" onchange="calculateDynamicPrice()"> Include Weekend / Festival Dynamic Surcharge (+25%)
+        </label>
+      </div>
+
+      <!-- Dynamic Price Calculation Breakdown Display (FR6) -->
+      <div id="priceBreakdownBox" class="glass-panel" style="padding: 1rem; background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3);">
+        <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: #a5b4fc;"><i class="fa-solid fa-calculator"></i> Rental Charge Breakdown (FR6)</h4>
+        <div style="font-size: 0.88rem; display: flex; flex-direction: column; gap: 0.3rem;">
+          <div style="display: flex; justify-content: space-between;"><span>Rental Duration:</span> <strong id="calcDays">0 Days</strong></div>
+          <div style="display: flex; justify-content: space-between;"><span>Standard Daily Rate:</span> <strong id="calcRate">$0.00</strong></div>
+          <div style="display: flex; justify-content: space-between;"><span>Dynamic Price Surcharge:</span> <strong id="calcDynamic">$0.00</strong></div>
+          <hr style="border-color: var(--border-glass); margin: 0.4rem 0;">
+          <div style="display: flex; justify-content: space-between; font-size: 1.1rem; color: var(--accent-cyan);"><span>Total Rental Charge:</span> <strong id="calcTotal">$0.00</strong></div>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="submitBooking()"><i class="fa-solid fa-paper-plane"></i> Submit Booking Reservation</button>
+    </div>
+  </div>
+
+  <!-- Extension Modal (FR5) -->
+  <div class="modal-overlay" id="extendModal">
+    <div class="modal-container">
+      <button class="modal-close" onclick="closeModal('extendModal')">&times;</button>
+      <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-calendar-plus" style="color: var(--accent-amber);"></i> Extend Rental Duration</h3>
+      <input type="hidden" id="extendBookingId">
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label>Current End Date</label>
+        <input type="text" class="form-control" id="extendCurrentEndDate" readonly>
+      </div>
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label>New Extended End Date</label>
+        <input type="date" class="form-control" id="extendNewEndDate">
+      </div>
+      <button type="button" class="btn btn-warning" style="width: 100%;" onclick="submitExtension()"><i class="fa-solid fa-clock"></i> Confirm Extension</button>
+    </div>
+  </div>
+
+  <!-- Vehicle Return & Damage Inspection Modal (FR8 & FR9) -->
+  <div class="modal-overlay" id="returnModal">
+    <div class="modal-container">
+      <button class="modal-close" onclick="closeModal('returnModal')">&times;</button>
+      <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-clipboard-user" style="color: var(--accent-rose);"></i> Vehicle Return & Damage Inspection</h3>
+      <input type="hidden" id="returnBookingId">
+      
+      <div class="form-grid" style="margin-bottom: 1rem;">
+        <div class="form-group">
+          <label>Return Date</label>
+          <input type="date" class="form-control" id="returnDate">
+        </div>
+        <div class="form-group">
+          <label>Fuel Level</label>
+          <select class="form-control" id="returnFuel">
+            <option value="Full">Full Tank</option>
+            <option value="3/4">3/4 Tank</option>
+            <option value="1/2">1/2 Tank</option>
+            <option value="1/4">1/4 Tank</option>
+            <option value="Empty">Empty Tank</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Odometer Reading (km)</label>
+          <input type="number" class="form-control" id="returnOdometer" placeholder="e.g. 45200">
+        </div>
+        <div class="form-group">
+          <label>Inspector Name</label>
+          <input type="text" class="form-control" id="returnInspector" value="Alex Mercer">
+        </div>
+      </div>
+
+      <div class="glass-panel" style="padding: 1rem; background: rgba(244, 63, 94, 0.08); border-color: rgba(244, 63, 94, 0.3); margin-bottom: 1rem;">
+        <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: #fda4af;"><i class="fa-solid fa-triangle-exclamation"></i> Damage Inspection Report (FR9)</h4>
+        <div class="form-group" style="margin-bottom: 0.75rem;">
+          <label>Damage Description (if any)</label>
+          <input type="text" class="form-control" id="returnDamageDesc" placeholder="e.g. Scratched bumper, cracked mirror">
+        </div>
+        <div class="form-group">
+          <label>Estimated Repair Cost ($)</label>
+          <input type="number" class="form-control" id="returnRepairCost" value="0.0">
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-danger" style="width: 100%;" onclick="submitReturnInspection()"><i class="fa-solid fa-file-invoice-dollar"></i> Process Return & Generate Bill</button>
+    </div>
+  </div>
+
+  <!-- Printable Invoice Modal (FR7) -->
+  <div class="modal-overlay" id="invoiceModal">
+    <div class="modal-container" style="max-width: 650px;">
+      <button class="modal-close" onclick="closeModal('invoiceModal')">&times;</button>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3><i class="fa-solid fa-file-invoice" style="color: var(--accent-emerald);"></i> Rental Tax Invoice</h3>
+        <button class="btn btn-secondary btn-sm" onclick="printInvoice()"><i class="fa-solid fa-print"></i> Print Invoice</button>
+      </div>
+
+      <div id="invoiceContent" class="invoice-box">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Vehicle Modal (FR2) -->
+  <div class="modal-overlay" id="vehicleFormModal">
+    <div class="modal-container">
+      <button class="modal-close" onclick="closeModal('vehicleFormModal')">&times;</button>
+      <h3 style="margin-bottom: 1rem;" id="vehicleModalTitle"><i class="fa-solid fa-car-side" style="color: var(--primary);"></i> Add Vehicle</h3>
+      <form id="vehicleForm">
+        <input type="hidden" id="vehicleFormId">
+        <div class="form-grid" style="margin-bottom: 0.75rem;">
+          <div class="form-group">
+            <label>Vehicle Type</label>
+            <select class="form-control" id="vType">
+              <option value="Car">Car</option>
+              <option value="Bike">Bike</option>
+              <option value="SUV">SUV</option>
+              <option value="Luxury">Luxury</option>
+              <option value="Electric">Electric</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Brand</label>
+            <input type="text" class="form-control" id="vBrand" required placeholder="Toyota">
+          </div>
+          <div class="form-group">
+            <label>Model</label>
+            <input type="text" class="form-control" id="vModel" required placeholder="Camry">
+          </div>
+          <div class="form-group">
+            <label>Registration Number</label>
+            <input type="text" class="form-control" id="vRegNo" required placeholder="KA-01-AB-1234">
+          </div>
+          <div class="form-group">
+            <label>Daily Rental Rate ($)</label>
+            <input type="number" step="0.1" class="form-control" id="vDailyRate" required placeholder="50.0">
+          </div>
+          <div class="form-group">
+            <label>Availability Status</label>
+            <select class="form-control" id="vAvailability">
+              <option value="AVAILABLE">AVAILABLE</option>
+              <option value="BOOKED">BOOKED</option>
+              <option value="RENTED">RENTED</option>
+              <option value="MAINTENANCE">MAINTENANCE</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Insurance Expiry Date</label>
+            <input type="date" class="form-control" id="vInsuranceExpiry">
+          </div>
+          <div class="form-group">
+            <label>Pollution Expiry Date</label>
+            <input type="date" class="form-control" id="vPollutionExpiry">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label>Image URL</label>
+          <input type="text" class="form-control" id="vImageUrl" placeholder="https://images.unsplash.com/...">
+        </div>
+        <button type="button" class="btn btn-primary" style="width: 100%;" onclick="saveVehicle()"><i class="fa-solid fa-save"></i> Save Vehicle</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Schedule Maintenance Modal (FR10) -->
+  <div class="modal-overlay" id="maintenanceModal">
+    <div class="modal-container">
+      <button class="modal-close" onclick="closeModal('maintenanceModal')">&times;</button>
+      <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-wrench" style="color: var(--accent-amber);"></i> Schedule Vehicle Maintenance</h3>
+      <div class="form-group" style="margin-bottom: 0.75rem;">
+        <label>Select Vehicle</label>
+        <select class="form-control" id="maintVehicleSelect">
+          <!-- Rendered dynamically -->
+        </select>
+      </div>
+      <div class="form-grid" style="margin-bottom: 0.75rem;">
+        <div class="form-group">
+          <label>Next Service Date</label>
+          <input type="date" class="form-control" id="maintNextDate">
+        </div>
+        <div class="form-group">
+          <label>Maintenance Status</label>
+          <select class="form-control" id="maintStatus">
+            <option value="SCHEDULED">SCHEDULED</option>
+            <option value="IN_PROGRESS">IN_PROGRESS</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label>Service Notes</label>
+        <input type="text" class="form-control" id="maintNotes" placeholder="e.g. Engine oil change & brake inspection">
+      </div>
+      <button type="button" class="btn btn-warning" style="width: 100%;" onclick="submitMaintenance()"><i class="fa-solid fa-calendar-check"></i> Save Schedule</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
